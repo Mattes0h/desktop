@@ -3090,6 +3090,8 @@ export class AppStore extends TypedBaseStore<IAppState> {
     const gitStore = this.gitStoreCache.get(repository)
 
     await gitStore.deleteTag(name)
+
+    this.statsStore.recordTagDeleted()
   }
 
   private updateCheckoutProgress(
