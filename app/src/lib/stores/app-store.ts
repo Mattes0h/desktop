@@ -276,7 +276,6 @@ import { parseRemote } from '../../lib/remote-parsing'
 import { createTutorialRepository } from './helpers/create-tutorial-repository'
 import { sendNonFatalException } from '../helpers/non-fatal-exception'
 import { getDefaultDir } from '../../ui/lib/default-dir'
-import { clearTagsToPushCache } from './helpers/fetch-tags-to-push-memoized'
 
 const LastSelectedRepositoryIDKey = 'last-selected-repository-id'
 
@@ -2784,10 +2783,6 @@ export class AppStore extends TypedBaseStore<IAppState> {
     this._initializeCompare(repository)
 
     this.updateCurrentTutorialStep(repository)
-
-    this.withAuthenticatingUser(repository, (_, account) =>
-      gitStore.fetchTagsToPush(account)
-    )
   }
 
   private async updateStashEntryCountMetric(
@@ -3084,9 +3079,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
   ): Promise<void> {
     const gitStore = this.gitStoreCache.get(repository)
 
-    await this.withAuthenticatingUser(repository, (_, account) =>
-      gitStore.createTag(account, name, targetCommitSha)
-    )
+    await gitStore.createTag(name, targetCommitSha)
     this.statsStore.recordTagCreatedInDesktop()
 
     this._closePopup()
@@ -3636,6 +3629,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
               safeRemote,
               branch.name,
               branch.upstreamWithoutRemote,
+              gitStore.tagsToPush,
               options,
               progress => {
                 this.updatePushPullFetchProgress(repository, {
@@ -3645,6 +3639,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
                 })
               }
             )
+            gitStore.clearTagsToPush()
 
             await gitStore.fetchRemotes(
               account,
@@ -3738,10 +3733,6 @@ export class AppStore extends TypedBaseStore<IAppState> {
     if (state.isPushPullFetchInProgress) {
       return
     }
-
-    // Clear the cache to make sure that the tags to push information
-    // is refetched after a push/pull.
-    clearTagsToPushCache(this.gitStoreCache.get(repository).currentRemote)
 
     this.repositoryStateCache.update(repository, () => ({
       isPushPullFetchInProgress: true,
