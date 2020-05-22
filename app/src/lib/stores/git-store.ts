@@ -1588,5 +1588,5 @@ export class GitStore extends BaseStore {
 }
 
 function getTagsToPushKey(repository: Repository) {
-  return `tags-to-push-${repository.hash}`
+  return `tags-to-push-${repository.id}`
 }
