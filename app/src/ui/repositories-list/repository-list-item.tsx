@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Repository } from '../../models/repository'
-import { Octicon, iconForRepository, OcticonSymbol } from '../octicons'
+import { Octicon, iconForRepository } from '../octicons'
+import * as OcticonSymbol from '../octicons/octicons.generated'
 import { showContextualMenu } from '../main-process-proxy'
 import { Repositoryish } from './group-repositories'
 import { IMenuItem } from '../../lib/menu-item'
@@ -42,7 +43,7 @@ interface IRepositoryListItemProps {
   /** The characters in the repository name to highlight */
   readonly matches: IMatches
 
-  /** Number of commits this local repo branch is behind or ahead of its remote brance */
+  /** Number of commits this local repo branch is behind or ahead of its remote branch */
   readonly aheadBehind: IAheadBehind | null
 
   /** Number of uncommitted changes */

@@ -10,7 +10,8 @@ import { join } from 'path'
 import { Repository } from '../../../models/repository'
 import { Dispatcher } from '../../dispatcher'
 import { showContextualMenu } from '../../main-process-proxy'
-import { Octicon, OcticonSymbol } from '../../octicons'
+import { Octicon } from '../../octicons'
+import * as OcticonSymbol from '../../octicons/octicons.generated'
 import { PathText } from '../path-text'
 import {
   ManualConflictResolutionKind,
@@ -423,7 +424,7 @@ function getBranchForResolution(
 }
 
 /**
- * Calculates the number of merge conclicts in a file from the number of markers
+ * Calculates the number of merge conflicts in a file from the number of markers
  * divides by three and rounds up since each conflict is indicated by three separate markers
  * (`<<<<<`, `>>>>>`, and `=====`)
  *

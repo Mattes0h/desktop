@@ -52,7 +52,8 @@ import {
   BranchDropdown,
   RevertProgress,
 } from './toolbar'
-import { OcticonSymbol, iconForRepository } from './octicons'
+import { iconForRepository, OcticonSymbolType } from './octicons'
+import * as OcticonSymbol from './octicons/octicons.generated'
 import { showCertificateTrustDialog, sendReady } from './main-process-proxy'
 import { DiscardChanges } from './discard-changes'
 import { Welcome } from './welcome'
@@ -1384,7 +1385,7 @@ export class App extends React.Component<IAppProps, IAppState> {
         const tip = state.branchesState.tip
 
         // we should never get in this state since we disable the menu
-        // item in a detatched HEAD state, this check is so TSC is happy
+        // item in a detached HEAD state, this check is so TSC is happy
         if (tip.kind !== TipState.Valid) {
           return null
         }
@@ -1866,7 +1867,7 @@ export class App extends React.Component<IAppProps, IAppState> {
         const { repository, branchToCheckout: branchToCheckout } = popup
         return (
           <OverwriteStash
-            key="overwite-stash"
+            key="overwrite-stash"
             dispatcher={this.props.dispatcher}
             repository={repository}
             branchToCheckout={branchToCheckout}
@@ -2021,7 +2022,7 @@ export class App extends React.Component<IAppProps, IAppState> {
 
         if (conflictState === null || conflictState.kind === 'merge') {
           log.debug(
-            `[App.onShowRebasConflictsBanner] no conflict state found, ignoring...`
+            `[App.onShowRebaseConflictsBanner] no conflict state found, ignoring...`
           )
           return
         }
@@ -2266,7 +2267,7 @@ export class App extends React.Component<IAppProps, IAppState> {
 
     const repository = selection ? selection.repository : null
 
-    let icon: OcticonSymbol
+    let icon: OcticonSymbolType
     let title: string
     if (repository) {
       icon = iconForRepository(repository)
@@ -2574,6 +2575,7 @@ export class App extends React.Component<IAppProps, IAppState> {
           onViewCommitOnGitHub={this.onViewCommitOnGitHub}
           imageDiffType={state.imageDiffType}
           hideWhitespaceInDiff={state.hideWhitespaceInDiff}
+          showSideBySideDiff={state.showSideBySideDiff}
           focusCommitMessage={state.focusCommitMessage}
           askForConfirmationOnDiscardChanges={
             state.askForConfirmationOnDiscardChanges

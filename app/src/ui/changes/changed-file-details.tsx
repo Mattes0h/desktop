@@ -2,13 +2,22 @@ import * as React from 'react'
 import { PathLabel } from '../lib/path-label'
 import { AppFileStatus } from '../../models/status'
 import { IDiff, DiffType } from '../../models/diff'
-import { Octicon, OcticonSymbol, iconForStatus } from '../octicons'
+import { Octicon, iconForStatus } from '../octicons'
+import * as OcticonSymbol from '../octicons/octicons.generated'
 import { mapStatus } from '../../lib/status'
+import { enableSideBySideDiffs } from '../../lib/feature-flag'
+import { DiffOptions } from '../diff/diff-options'
 
 interface IChangedFileDetailsProps {
   readonly path: string
   readonly status: AppFileStatus
   readonly diff: IDiff | null
+
+  /** Whether we should display side by side diffs. */
+  readonly showSideBySideDiff: boolean
+
+  /** Called when the user changes the side by side diffs setting. */
+  readonly onShowSideBySideDiffChanged: (checked: boolean) => void
 }
 
 /** Displays information about a file */
@@ -24,6 +33,13 @@ export class ChangedFileDetails extends React.Component<
       <div className="header">
         <PathLabel path={this.props.path} status={this.props.status} />
         {this.renderDecorator()}
+
+        {enableSideBySideDiffs() && (
+          <DiffOptions
+            onShowSideBySideDiffChanged={this.props.onShowSideBySideDiffChanged}
+            showSideBySideDiff={this.props.showSideBySideDiff}
+          />
+        )}
 
         <Octicon
           symbol={iconForStatus(status)}
