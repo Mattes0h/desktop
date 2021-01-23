@@ -1,20 +1,10 @@
 import * as React from 'react'
-import memoizeOne from 'memoize-one'
+
 import { remote } from 'electron'
 import { WindowState } from '../../lib/window-state'
 import { WindowControls } from './window-controls'
-import { Octicon, OcticonSymbol } from '../octicons'
-import { isMacOSBigSurOrLater } from '../../lib/get-os'
-
-/** Get the height (in pixels) of the title bar depending on the platform */
-export function getTitleBarHeight() {
-  if (__DARWIN__) {
-    // Big Sur has taller title bars, see #10980
-    return isMacOSBigSurOrLater() ? 26 : 22
-  }
-
-  return 28
-}
+import { Octicon } from '../octicons/octicon'
+import * as OcticonSymbol from '../octicons/octicons.generated'
 
 interface ITitleBarProps {
   /**
@@ -38,17 +28,29 @@ interface ITitleBarProps {
   readonly windowZoomFactor?: number
 }
 
-export class TitleBar extends React.Component<ITitleBarProps> {
-  private getStyle = memoizeOne((windowZoomFactor: number | undefined) => {
-    const style: React.CSSProperties = { height: getTitleBarHeight() }
+interface ITitleBarState {
+  readonly style?: React.CSSProperties
+}
 
-    // See windowZoomFactor in ITitleBarProps, this is only applicable on macOS.
-    if (__DARWIN__ && windowZoomFactor !== undefined) {
-      style.zoom = 1 / windowZoomFactor
-    }
+function getState(props: ITitleBarProps): ITitleBarState {
+  // See windowZoomFactor in ITitleBarProps, this is only
+  // applicable on macOS.
+  if (!__DARWIN__) {
+    return { style: undefined }
+  }
 
-    return style
-  })
+  return {
+    style: props.windowZoomFactor
+      ? { zoom: 1 / props.windowZoomFactor }
+      : undefined,
+  }
+}
+
+export class TitleBar extends React.Component<ITitleBarProps, ITitleBarState> {
+  public constructor(props: ITitleBarProps) {
+    super(props)
+    this.state = getState(props)
+  }
 
   private onTitlebarDoubleClickDarwin = () => {
     const actionOnDoubleClick = remote.systemPreferences.getUserDefault(
@@ -68,6 +70,14 @@ export class TitleBar extends React.Component<ITitleBarProps> {
       case 'Minimize':
         mainWindow.minimize()
         break
+    }
+  }
+
+  public componentWillReceiveProps(nextProps: ITitleBarProps) {
+    if (__DARWIN__) {
+      if (this.props.windowZoomFactor !== nextProps.windowZoomFactor) {
+        this.setState(getState(nextProps))
+      }
     }
   }
 
@@ -107,7 +117,7 @@ export class TitleBar extends React.Component<ITitleBarProps> {
         className={titleBarClass}
         id="desktop-app-title-bar"
         onDoubleClick={onTitlebarDoubleClick}
-        style={this.getStyle(this.props.windowZoomFactor)}
+        style={this.state.style}
       >
         {topResizeHandle}
         {leftResizeHandle}

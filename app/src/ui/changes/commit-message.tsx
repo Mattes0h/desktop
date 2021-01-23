@@ -18,7 +18,8 @@ import { Avatar } from '../lib/avatar'
 import { Loading } from '../lib/loading'
 import { AuthorInput } from '../lib/author-input'
 import { FocusContainer } from '../lib/focus-container'
-import { Octicon, OcticonSymbol } from '../octicons'
+import { showContextualMenu } from '../main-process-proxy'
+import { Octicon } from '../octicons'
 import { IAuthor } from '../../models/author'
 import { IMenuItem } from '../../lib/menu-item'
 import { ICommitContext } from '../../models/commit'
@@ -27,18 +28,18 @@ import { PermissionsCommitWarning } from './permissions-commit-warning'
 import { LinkButton } from '../lib/link-button'
 import { FoldoutType } from '../../lib/app-state'
 import { IAvatarUser, getAvatarUserFromAuthor } from '../../models/avatar'
-import { showContextualMenu } from '../main-process-proxy'
 
-const addAuthorIcon = new OcticonSymbol(
-  18,
-  13,
-  'M14 6V4.25a.75.75 0 0 1 1.5 0V6h1.75a.75.75 0 1 1 0 1.5H15.5v1.75a.75.75 0 0 ' +
+const addAuthorIcon = {
+  w: 18,
+  h: 13,
+  d:
+    'M14 6V4.25a.75.75 0 0 1 1.5 0V6h1.75a.75.75 0 1 1 0 1.5H15.5v1.75a.75.75 0 0 ' +
     '1-1.5 0V7.5h-1.75a.75.75 0 1 1 0-1.5H14zM8.5 4a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 ' +
     '0zm.063 3.064a3.995 3.995 0 0 0 1.2-4.429A3.996 3.996 0 0 0 8.298.725a4.01 4.01 0 0 ' +
     '0-6.064 1.91 3.987 3.987 0 0 0 1.2 4.43A5.988 5.988 0 0 0 0 12.2a.748.748 0 0 0 ' +
     '.716.766.751.751 0 0 0 .784-.697 4.49 4.49 0 0 1 1.39-3.04 4.51 4.51 0 0 1 6.218 ' +
-    '0 4.49 4.49 0 0 1 1.39 3.04.748.748 0 0 0 .786.73.75.75 0 0 0 .714-.8 5.989 5.989 0 0 0-3.435-5.136z'
-)
+    '0 4.49 4.49 0 0 1 1.39 3.04.748.748 0 0 0 .786.73.75.75 0 0 0 .714-.8 5.989 5.989 0 0 0-3.435-5.136z',
+}
 
 interface ICommitMessageProps {
   readonly onCreateCommit: (context: ICommitContext) => Promise<boolean>
@@ -73,8 +74,6 @@ interface ICommitMessageProps {
 
   /** Whether this component should show its onboarding tutorial nudge arrow */
   readonly shouldNudge: boolean
-
-  readonly commitSpellcheckEnabled: boolean
 }
 
 interface ICommitMessageState {
@@ -116,6 +115,7 @@ export class CommitMessage extends React.Component<
 
   public constructor(props: ICommitMessageProps) {
     super(props)
+
     const { commitMessage } = this.props
 
     this.state = {
@@ -332,46 +332,27 @@ export class CommitMessage extends React.Component<
     }
   }
 
-  private onContextMenu = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (
-      event.target instanceof HTMLTextAreaElement ||
-      event.target instanceof HTMLInputElement
-    ) {
+  private onContextMenu = (event: React.MouseEvent<any>) => {
+    if (event.defaultPrevented) {
       return
     }
 
-    showContextualMenu([this.getAddRemoveCoAuthorsMenuItem()])
+    event.preventDefault()
+
+    const items: IMenuItem[] = [this.getAddRemoveCoAuthorsMenuItem()]
+    showContextualMenu(items)
   }
 
-  private onAutocompletingInputContextMenu = () => {
+  private onAutocompletingInputContextMenu = (event: React.MouseEvent<any>) => {
+    event.preventDefault()
+
     const items: IMenuItem[] = [
       this.getAddRemoveCoAuthorsMenuItem(),
       { type: 'separator' },
       { role: 'editMenu' },
-      { type: 'separator' },
     ]
 
-    items.push(
-      this.getCommitSpellcheckEnabilityMenuItem(
-        this.props.commitSpellcheckEnabled
-      )
-    )
-
-    showContextualMenu(items, true)
-  }
-
-  private getCommitSpellcheckEnabilityMenuItem(isEnabled: boolean): IMenuItem {
-    const enableLabel = __DARWIN__
-      ? 'Enable Commit Spellcheck'
-      : 'Enable commit spellcheck'
-    const disableLabel = __DARWIN__
-      ? 'Disable Commit Spellcheck'
-      : 'Disable commit spellcheck'
-    return {
-      label: isEnabled ? disableLabel : enableLabel,
-      action: () =>
-        this.props.dispatcher.setCommitSpellcheckEnabled(!isEnabled),
-    }
+    showContextualMenu(items)
   }
 
   private onCoAuthorToggleButtonClick = (
@@ -567,7 +548,6 @@ export class CommitMessage extends React.Component<
             autocompletionProviders={this.props.autocompletionProviders}
             onContextMenu={this.onAutocompletingInputContextMenu}
             disabled={this.props.isCommitting}
-            spellcheck={this.props.commitSpellcheckEnabled}
           />
         </div>
 
@@ -585,7 +565,6 @@ export class CommitMessage extends React.Component<
             onElementRef={this.onDescriptionTextAreaRef}
             onContextMenu={this.onAutocompletingInputContextMenu}
             disabled={this.props.isCommitting}
-            spellcheck={this.props.commitSpellcheckEnabled}
           />
           {this.renderActionBar()}
         </FocusContainer>
